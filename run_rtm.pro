@@ -1,4 +1,6 @@
 PRO RUN_RTM
+  start_time = SYSTIME(1)
+
   ; Set day of year
   day_of_year = 78
   
@@ -96,7 +98,7 @@ PRO RUN_RTM
   received_irradiance_left = REPLICATE(0.0, n_wavelengths)
   received_irradiance_right = REPLICATE(0.0, n_wavelengths)
   
-  number_of_sensor_hits = 0
+  number_of_sensor_hits = 0L
   
   ; Create database of params which is referenced by grid cell contents
   db = replicate(params_struct, 100)
@@ -105,7 +107,7 @@ PRO RUN_RTM
   ; ----------------------
   ; START MONTE CARLO LOOP
   ; ----------------------
-  FOR it = 0, 100 DO BEGIN
+  FOR it = 0L, 1000 DO BEGIN
     ; Start ray at the sun
     ray_x = sun_x
     ray_y = sun_y
@@ -146,10 +148,10 @@ PRO RUN_RTM
         ; Yes - calculate scatter
         
         ; Calculate Rayleigh scatter
-        print, "Doing Rayleigh Scatter"
+        ;print, "Doing Rayleigh Scatter"
         new_coords = CALCULATE_RAYLEIGH_SCATTER(prev_ray_x, prev_ray_y, ray_x, ray_y)   
       ENDIF ELSE BEGIN
-       print, "Going straight"
+       ;print, "Going straight"
         ; No - send ray straight on (depending on previous grid location)
         new_coords = CALCULATE_STRAIGHT_PATH(prev_ray_x, prev_ray_y, ray_x, ray_y)
       ENDELSE 
@@ -200,12 +202,12 @@ PRO RUN_RTM
     ; Transmittance due to ozone from SPCTRAL2 manual eqn 2-9 with our path length instead of Mo (as Mo is approx anyway)
     trans_ozone = EXP( -1 * DOUBLE(ozone_abs_coef) * ozone_amount * 0.001 * path_length)
       
-    print, "Final location ", ray_x, ray_y
-    print, "Total water ", precip_water_depth
-    print, "Trans WV ", trans_water_vapour
-    print, "Path length", path_length
-    print, "Trans Ozone", trans_ozone
-    print, "Trans Gas", trans_mixed_gases
+    ;print, "Final location ", ray_x, ray_y
+    ;print, "Total water ", precip_water_depth
+    ;print, "Trans WV ", trans_water_vapour
+    ;print, "Path length", path_length
+    ;print, "Trans Ozone", trans_ozone
+    ;print, "Trans Gas", trans_mixed_gases
     
     earth_sun_distance_factor = CALCULATE_EARTH_SUN_DISTANCE_FACTOR(day_of_year)
     
@@ -214,8 +216,8 @@ PRO RUN_RTM
     ; Second calculation converts this to a horizontal surface
     irradiance = extra_terrestrial * trans_water_vapour * trans_ozone * trans_mixed_gases
     irradiance = irradiance * COS(solar_zenith_angle * !DTOR)
-    print, "Wavelength", wavelengths
-    print, "IRRADIANCE", irradiance
+    ;print, "Wavelength", wavelengths
+    ;print, "IRRADIANCE", irradiance
     
     ; Store irradiance at sensor, by angle (basically vertical,
     ; from left or from right) - depending on where it's come from
@@ -239,5 +241,9 @@ PRO RUN_RTM
   print, received_irradiance_vertical
   print, "RIGHT:"
   print, received_irradiance_right
+  
+  end_time = SYSTIME(1)
+  
+  print, "Time taken = ", end_time - start_time
   
 END

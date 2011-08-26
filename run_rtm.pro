@@ -99,13 +99,13 @@ PRO RUN_RTM
   number_of_sensor_hits = 0
   
   ; Create database of params which is referenced by grid cell contents
-  db = replicate(params_struct, 100)  
+  db = replicate(params_struct, 100)
   
   
   ; ----------------------
   ; START MONTE CARLO LOOP
   ; ----------------------
-  FOR it = 0, 10 DO BEGIN
+  FOR it = 0, 100 DO BEGIN
     ; Start ray at the sun
     ray_x = sun_x
     ray_y = sun_y
@@ -113,6 +113,7 @@ PRO RUN_RTM
     ; Choose randomly which angle it is coming out of the sun (ie.
     ; what it's 'imaginary' previous point was)
     prev_ray_x = CHOOSE_RANDOMLY([sun_x - 1, sun_x, sun_x + 1])
+    prev_ray_x = prev_ray_x[0]
     prev_ray_y = -1
     
     
@@ -141,11 +142,19 @@ PRO RUN_RTM
       
       
       ; Decide whether to scatter or not
-      
+      IF RANDOMU(seed, 1) GT 0.5 THEN BEGIN
         ; Yes - calculate scatter
         
+        ; Calculate Rayleigh scatter
+        print, "Doing Rayleigh Scatter"
+        new_coords = CALCULATE_RAYLEIGH_SCATTER(prev_ray_x, prev_ray_y, ray_x, ray_y)   
+      ENDIF ELSE BEGIN
+       print, "Going straight"
         ; No - send ray straight on (depending on previous grid location)
         new_coords = CALCULATE_STRAIGHT_PATH(prev_ray_x, prev_ray_y, ray_x, ray_y)
+      ENDELSE 
+        
+        ; Assign values to variables from new_coords
         new_x = new_coords[0]
         new_y = new_coords[1]
         
@@ -222,6 +231,8 @@ PRO RUN_RTM
   
   print, "FINAL RESULTS"
   print, "-------------"
+  print, "N hits ", NUMBER_OF_SENSOR_HITS
+  print, "Received Irr Left", RECEIVED_IRRADIANCE_LEFT
   print, "LEFT:"
   print, received_irradiance_left / number_of_sensor_hits
   print, "VERTICAL:"

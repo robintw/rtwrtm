@@ -164,7 +164,7 @@ PRO RUN_RTM
     trans_mixed_gases = EXP(  (-1.41 * gas_abs_coef * path_length) / (1 + 118.93 * gas_abs_coef * path_length)^0.45)
     
     ; TODO: Write equation here from van Heuklon
-    ozone_amount = 1
+    ozone_amount = CALCULATE_OZONE_AMOUNT(day_of_year, lat, long)
     
     ; Transmittance due to ozone from SPCTRAL2 manual eqn 2-9 with our path length instead of Mo (as Mo is approx anyway)
     trans_ozone = EXP( -1 * ozone_abs_coef * ozone_amount * path_length)

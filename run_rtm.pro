@@ -1,4 +1,14 @@
 PRO RUN_RTM
+  ; Set day of year
+  day_of_year = 78
+  
+  ; Set solar zenith angle
+  solar_zenith_angle = 5
+  
+  ; Set location
+  lat = 50
+  long = 0
+
   ; Set size of grid
   x_len = 10
   y_len = 5
@@ -65,9 +75,10 @@ PRO RUN_RTM
       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, $
       0.0 ]
  
-  wavelengths_to_use = [0, 1, 59, 120]
+  wavelengths_to_use = [0, 27, 59, 120]
  
   wavelengths = wavelengths[wavelengths_to_use]
+  extra_terrestrial = extra_terrestrial[wavelengths_to_use]
   wv_abs_coef = wv_abs_coef[wavelengths_to_use]
   gas_abs_coef = gas_abs_coef[wavelengths_to_use]
   ozone_abs_coef = ozone_abs_coef[wavelengths_to_use]
@@ -77,6 +88,15 @@ PRO RUN_RTM
 
   ; Create grid
   grid = intarr(x_len, y_len)
+  
+  n_wavelengths = N_ELEMENTS(wavelengths_to_use)
+  
+  ; Create variables for storing the final result
+  received_irradiance_vertical = REPLICATE(0.0, n_wavelengths)
+  received_irradiance_left = REPLICATE(0.0, n_wavelengths)
+  received_irradiance_right = REPLICATE(0.0, n_wavelengths)
+  
+  number_of_sensor_hits = 0
   
   ; Create database of params which is referenced by grid cell contents
   db = replicate(params_struct, 100)  
@@ -152,6 +172,8 @@ PRO RUN_RTM
     ; RAY HAS GOT TO SENSOR - so do calculations
     ; ------------------------------------------
     
+    number_of_sensor_hits += 1
+    
     ; Calculate the relative path length
     ; This is like M (the relative airmass), but is the ratio of the number of cells the ray passed through
     ; over the vertical height of the grid (ie. the shortest route the ray could have taken)
@@ -163,19 +185,48 @@ PRO RUN_RTM
     ; Transmittance due to uniformly mixed gas absorption from SPCTRAL2 manual eqn 2-11
     trans_mixed_gases = EXP(  (-1.41 * gas_abs_coef * path_length) / (1 + 118.93 * gas_abs_coef * path_length)^0.45)
     
-    ; TODO: Write equation here from van Heuklon
+    ; Calculate ozone amount using van Heuklon's equation
     ozone_amount = CALCULATE_OZONE_AMOUNT(day_of_year, lat, long)
     
     ; Transmittance due to ozone from SPCTRAL2 manual eqn 2-9 with our path length instead of Mo (as Mo is approx anyway)
-    trans_ozone = EXP( -1 * ozone_abs_coef * ozone_amount * path_length)
+    trans_ozone = EXP( -1 * DOUBLE(ozone_abs_coef) * ozone_amount * 0.001 * path_length)
       
     print, "Final location ", ray_x, ray_y
     print, "Total water ", precip_water_depth
     print, "Trans WV ", trans_water_vapour
     print, "Path length", path_length
+    print, "Trans Ozone", trans_ozone
     print, "Trans Gas", trans_mixed_gases
+    
+    earth_sun_distance_factor = CALCULATE_EARTH_SUN_DISTANCE_FACTOR(day_of_year)
+    
+    ; From SPCTRAL2 manual, eqn 2-1
+    ; The first calculation is for a surface normal to the direction of the sun
+    ; Second calculation converts this to a horizontal surface
+    irradiance = extra_terrestrial * trans_water_vapour * trans_ozone * trans_mixed_gases
+    irradiance = irradiance * COS(solar_zenith_angle * !DTOR)
+    print, "Wavelength", wavelengths
+    print, "IRRADIANCE", irradiance
+    
+    ; Store irradiance at sensor, by angle (basically vertical,
+    ; from left or from right) - depending on where it's come from
+    
+    diff = sensor_x - prev_ray_x
+    
+    CASE diff OF
+      1: received_irradiance_left += irradiance
+      0: received_irradiance_vertical += irradiance
+      -1: received_irradiance_right += irradiance
+    ENDCASE
   ENDFOR
   
-  
+  print, "FINAL RESULTS"
+  print, "-------------"
+  print, "LEFT:"
+  print, received_irradiance_left / number_of_sensor_hits
+  print, "VERTICAL:"
+  print, received_irradiance_vertical
+  print, "RIGHT:"
+  print, received_irradiance_right
   
 END

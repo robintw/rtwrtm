@@ -1,13 +1,16 @@
 PRO RUN_RTM
   start_time = SYSTIME(1)
 
+  ; Set number of iterations
+  n_iterations = 1000
+
   ; Set day of year
   day_of_year = 78
   
   ; Set solar zenith angle
   solar_zenith_angle = 5
   
-  ; Set location
+  ; Set location on the surface of the Earth
   lat = 50
   long = 0
 
@@ -88,10 +91,17 @@ PRO RUN_RTM
   
   ; Calculate likelihood of Rayleigh scattering occurring
   rayleigh_scat_prob = (1/wavelengths^4)/150
+  
+  ; Calculate ozone amount using van Heuklon's equation (based on date, lat and long)
+  ozone_amount = CALCULATE_OZONE_AMOUNT(day_of_year, lat, long)
+  
+  earth_sun_distance_factor = CALCULATE_EARTH_SUN_DISTANCE_FACTOR(day_of_year)
+  
  
   ;wavelengths_to_use = [0, 1, 27, 59, 120]
   wavelengths_to_use = indgen(122)
  
+  ; Reduce all of the parameters arrays to just contain the values for the wavelengths we're going to use
   wavelengths = wavelengths[wavelengths_to_use]
   extra_terrestrial = extra_terrestrial[wavelengths_to_use]
   wv_abs_coef = wv_abs_coef[wavelengths_to_use]
@@ -99,17 +109,8 @@ PRO RUN_RTM
   ozone_abs_coef = ozone_abs_coef[wavelengths_to_use]
   rayleigh_scat_prob = rayleigh_scat_prob[wavelengths_to_use]
 
-  ; Create params structure
-  params_struct = {params, precip_water_depth: 0.3, aerosol_amount: 3}
-
   ; Create grid
-  grid = intarr(x_len, y_len)
-  
-  grid[5, 1] = 1
-  grid[5, 2] = 1
-  grid[6, 1] = 1
-  grid[6, 2] = 1
-  
+  grid = intarr(x_len, y_len)  
   
   n_wavelengths = N_ELEMENTS(wavelengths_to_use)
   
@@ -117,19 +118,25 @@ PRO RUN_RTM
   received_irradiance_vertical = REPLICATE(0.0, n_wavelengths)
   received_irradiance_left = REPLICATE(0.0, n_wavelengths)
   received_irradiance_right = REPLICATE(0.0, n_wavelengths)
-  
   number_of_sensor_hits = 0L
+  
+  ; Create params structure with default values
+  params_struct = {params, precip_water_depth: 0.3, aerosol_amount: 3}
   
   ; Create database of params which is referenced by grid cell contents
   db = replicate(params_struct, 100)
   
   db[1].precip_water_depth = 0.5
   
+  grid[5, 1] = 1
+  grid[5, 2] = 1
+  grid[6, 1] = 1
+  grid[6, 2] = 1
   
   ; ----------------------
   ; START MONTE CARLO LOOP
   ; ----------------------
-  FOR it = 0L, 1000 DO BEGIN
+  FOR it = 0L, n_iterations DO BEGIN
     IF it MOD 100 EQ 0 THEN print, "At iteration ", it
   
     ; Start ray at the sun
@@ -153,16 +160,14 @@ PRO RUN_RTM
       wavelength = wavelengths[wv]
       ;print, "Doing wavelength ", wavelength
       
+      ; Initialise values that we will be summing into later on
       precip_water_depth = 0
       aerosol_amount = 0
       n_cells = 0
       
       ; Loop until ray location is at edge of grid
       WHILE 1 DO BEGIN
-        ;print, ray_x, ray_y
-        
-        ;print, "Started loop"
-        ; If ray location is at edge of grid, kill ray (and store if needed)
+        ; If ray location is at edge of grid, destroy the ray and skip to the bottom of the loop
         if ray_x GE x_len OR ray_x LT 0 THEN BREAK
         IF ray_y GE y_len OR ray_y LT 0 THEN BREAK
         
@@ -175,15 +180,16 @@ PRO RUN_RTM
 
         ; Sum the precipitable water depth - so at the end we have the total for the whole path
         precip_water_depth += params.precip_water_depth
-        
-        rand = RANDOMU(seed, 1)
-
         aerosol_amount += params.aerosol_amount
         
+        
+        rand = RANDOMU(seed, 1)
+        
+        aero_prob = aero_maritime_ext_coef[wv] * params.aerosol_amount
+
         ; TODO: Better way of deciding what kind (Rayleigh vs. Aerosol) of scattering to do
-        IF aero_maritime_ext_coef[wv] * params.aerosol_amount GT rayleigh_scat_prob[wv] THEN BEGIN
-          test_probability = aero_maritime_ext_coef[wv] * params.aerosol_amount
-          scatter_type = 1
+        IF aero_prob GT rayleigh_scat_prob[wv] THEN BEGIN
+          test_probability = aero_prob
         ENDIF ELSE BEGIN
           test_probability = rayleigh_scat_prob[wv]
           scatter_type = 2
@@ -218,21 +224,18 @@ PRO RUN_RTM
           ray_x = new_x
           ray_y = new_y
       ENDWHILE
-      
-  
-      
-      ;print, "Ray: ", ray_x, ray_y
-      ;print, "Sensor: ", sensor_x, sensor_y
+
       
       ; Check whether final location is somewhere we're interested in
       ; (basically: is it near the sensor?)
-      IF ray_y NE sensor_y THEN CONTINUE ; Check it's at the bottom of the grid
+      IF ray_y NE sensor_y THEN CONTINUE
       IF ray_x NE sensor_x THEN CONTINUE
   
       ; ------------------------------------------
       ; RAY HAS GOT TO SENSOR - so do calculations
       ; ------------------------------------------
       
+      ; TODO: Split this by angle?
       number_of_sensor_hits += 1
       
       ; Calculate the relative path length
@@ -246,8 +249,7 @@ PRO RUN_RTM
       ; Transmittance due to uniformly mixed gas absorption from SPCTRAL2 manual eqn 2-11
       trans_mixed_gases = EXP(  (DOUBLE(-1.41) * gas_abs_coef[wv] * path_length) / (1 + 118.93 * gas_abs_coef[wv] * path_length)^0.45)
       
-      ; Calculate ozone amount using van Heuklon's equation
-      ozone_amount = CALCULATE_OZONE_AMOUNT(day_of_year, lat, long)
+      
       
       ; Transmittance due to ozone from SPCTRAL2 manual eqn 2-9 with our path length instead of Mo (as Mo is approx anyway)
       trans_ozone = EXP( -1 * DOUBLE(ozone_abs_coef[wv]) * ozone_amount * 0.001 * path_length)
@@ -255,25 +257,13 @@ PRO RUN_RTM
       
       scaled_aerosol_amount = aerosol_amount / n_cells
       trans_aero_abs = EXP( DOUBLE(-1) * aero_abs_coef[wv] * scaled_aerosol_amount * path_length)
-      ;print, trans_aero_abs
-      
-      ;print, "Final location ", ray_x, ray_y
-      ;print, "Total water ", precip_water_depth
-      ;print, "Trans WV ", trans_water_vapour
-      ;print, "Path length", path_length
-      ;print, "Trans Ozone", trans_ozone
-      ;print, "Trans Gas", trans_mixed_gases
-      
-      earth_sun_distance_factor = CALCULATE_EARTH_SUN_DISTANCE_FACTOR(day_of_year)
       
       ; From SPCTRAL2 manual, eqn 2-1
       ; The first calculation is for a surface normal to the direction of the sun
       ; Second calculation converts this to a horizontal surface
       irradiance = extra_terrestrial[wv] * earth_sun_distance_factor * trans_water_vapour * trans_ozone * trans_mixed_gases * trans_aero_abs
-      ;print, "All trans = ", TRANS_WATER_VAPOUR * TRANS_MIXED_GASES * TRANS_OZONE
-      ;irradiance = irradiance * COS(solar_zenith_angle * !DTOR)
-      ;print, "Wavelength", wavelengths
-      ;print, "IRRADIANCE", irradiance
+
+      irradiance = irradiance * COS(solar_zenith_angle * !DTOR)
       
       ; Store irradiance at sensor, by angle (basically vertical,
       ; from left or from right) - depending on where it's come from
@@ -292,7 +282,6 @@ PRO RUN_RTM
   print, "-------------"
   print, "N hits ", NUMBER_OF_SENSOR_HITS
   
-  ;print, "Received Irr Vert", RECEIVED_IRRADIANCE_VERTICAL
   print, "LEFT:"
   print, received_irradiance_left / number_of_sensor_hits
   print, "VERTICAL:"
@@ -305,8 +294,7 @@ PRO RUN_RTM
   print, "Time taken = ", end_time - start_time
   
   cgWindow, 'plot', wavelengths, RECEIVED_IRRADIANCE_VERTICAL / NUMBER_OF_SENSOR_HITS
-  ;window
-  ;plot, wavelengths, EXTRA_TERRESTRIAL, linestyle=5
+  cgWindow, 'plot', wavelengths, EXTRA_TERRESTRIAL, linestyle=5
   
   print, "Done"
   

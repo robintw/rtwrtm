@@ -1,5 +1,5 @@
-FUNCTION CALCULATE_RAYLEIGH_SCATTER, prev_ray_x, prev_ray_y, ray_x, ray_y
-  ; Choose randomly from scattering directions
+FUNCTION CALCULATE_AEROSOL_SCATTER, prev_ray_x, prev_ray_y, ray_x, ray_y
+; Choose randomly from scattering directions
   rand = RANDOMU(seed, 1)
   rand = rand[0]
   
@@ -10,14 +10,9 @@ FUNCTION CALCULATE_RAYLEIGH_SCATTER, prev_ray_x, prev_ray_y, ray_x, ray_y
   locations_index_add = 0
   
   CASE 1 OF
-    rand GE 0 AND rand LT 0.125: locations_index_add = 7
-    rand GT 0.125 AND rand LT 0.2875: locations_index_add = 0
-    rand GT 0.2875 AND rand LT 0.4125: locations_index_add = 1
-    rand GT 0.4125 AND rand LT 0.49998: locations_index_add = 2
-    rand GT 0.49998 AND rand LT 0.62498: locations_index_add = 3
-    rand GT 0.62498 AND rand LT 0.78748: locations_index_add = 4
-    rand GT 0.78748 AND rand LT 0.91248: locations_index_add = 5
-    rand GT 0.91248 AND rand LE 1.0: locations_index_add = 6
+    rand GE 0 AND rand LT 0.914: locations_index_add = 0
+    rand GT 0.914 AND rand LT 0.957: locations_index_add = 1
+    rand GT 0.957 AND rand LE 1.0: locations_index_add = 7
   ENDCASE
     
   diff_x = prev_ray_x - ray_x

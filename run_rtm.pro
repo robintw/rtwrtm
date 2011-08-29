@@ -16,11 +16,11 @@ PRO RUN_RTM
   y_len = 5
   
   ; Set location of sun
-  sun_x = 2
+  sun_x = 5
   sun_y = 0
   
   ; Set location of sensor
-  sensor_x = 7
+  sensor_x = 5
   sensor_y = y_len ; Sensor is off the bottom of the grid!
   
   ; Create arrays of constants
@@ -34,7 +34,7 @@ PRO RUN_RTM
       1.578, 1.592, 1.61, 1.63, 1.646, 1.678, 1.74, 1.8, 1.86, 1.92, 1.96, 1.985, 2.005, $
       2.035, 2.065, 2.1, 2.148, 2.198, 2.27, 2.36, 2.45, 2.5, 2.6, 2.7, 2.8, 2.9, 3.0, $
       3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4.0]
-       
+             
   extra_terrestrial = [ 535.9, 558.3, 622.0, 692.7, 715.1, 832.9, 961.9, 931.9, 900.6, 911.3, 975.5, $
       975.9, 1119.9, 1103.8, 1033.8, 1479.1, 1701.3, 1740.4, 1587.2, 1837.0, 2005.0, $
       2043.0, 1987.0, 2027.0, 1896.0, 1909.0, 1927.0, 1831.0, 1891.0, 1898.0, 1892.0, $
@@ -77,6 +77,15 @@ PRO RUN_RTM
       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, $
       0.0 ]
   
+  ; Calculated by linearly interpolating the values from soot00 in the OPAC database to match the wavelengths used here
+  aero_abs_coef = [8.3289997e-007,  8.2177998e-007,  8.1065999e-007,  7.9954001e-007,  7.8842002e-007,  7.7730003e-007,  7.6617997e-007,  7.5505998e-007,  7.4393999e-007,  7.3282000e-007,  7.2170001e-007,  7.0357997e-007,  6.8545999e-007,  6.6734001e-007,  6.4922003e-007,  6.3109999e-007,  6.1616001e-007,  6.0122002e-007,  5.8627999e-007,  5.7134000e-007,  5.5640002e-007,  5.4397999e-007,  5.3156000e-007,  5.1914001e-007,  5.0671999e-007,  4.9430000e-007,  4.8310001e-007,  4.7190002e-007,  4.6070003e-007,  4.4949998e-007,  4.3829999e-007,  4.2086001e-007,  4.0080400e-007,  3.8797999e-007,  3.7454000e-007,  3.5723599e-007,  3.4976562e-007,  3.3534000e-007,  3.2398001e-007,  3.2004400e-007,  3.1689521e-007,  3.0922000e-007,  3.0322500e-007,  3.0107500e-007,  2.9892501e-007,  2.9677501e-007,  2.9140001e-007,  2.8280000e-007,  2.7755201e-007,  2.7502640e-007,  2.7246800e-007,  2.6968001e-007,  2.6312000e-007,  2.5656000e-007,  2.4864501e-007,  2.4593499e-007,  2.4322500e-007,  2.4187000e-007,  2.3997301e-007,  2.3699200e-007,  2.3238501e-007,  2.2831999e-007,  2.2466150e-007,  2.1555601e-007,  2.1004799e-007,  2.0454000e-007,  2.0086800e-007,  1.9903200e-007,  1.9627800e-007,  1.9334040e-007,  1.9168801e-007,  1.8617999e-007,  1.7883600e-007,  1.7456000e-007,  1.7212000e-007,  1.6845999e-007,  1.6480000e-007,  1.5931000e-007,  1.5351500e-007,  1.5107500e-007,  1.4930600e-007,  1.4686600e-007,  1.4494000e-007,  1.4345800e-007,  1.4197600e-007,  1.4041600e-007,  1.3932400e-007,  1.3792000e-007,  1.3636000e-007,  1.3511200e-007,  1.3261600e-007,  1.2778000e-007,  1.2384000e-007,  1.2004800e-007,  1.1625600e-007,  1.1372800e-007,  1.1214800e-007,  1.1098380e-007,  1.0968660e-007,  1.0838940e-007,  1.0687600e-007,  1.0480048e-007,  1.0263848e-007,  9.9525201e-008,  9.5633605e-008,  9.1741998e-008,  8.9580000e-008,  8.7020002e-008,  8.4459999e-008,  8.1900001e-008,  7.9339998e-008,  7.6780000e-008,  7.3695003e-008,  7.0609999e-008,  6.8741580e-008,  6.6913635e-008,  6.5450000e-008,  6.3638002e-008,  6.1825999e-008,  6.0128001e-008,  5.8543998e-008,  5.6960000e-008]
+  
+  ; Calculated by linearly interpolating the maritime aerosol coefficients from OPAC to match wavelengths here
+  aero_maritime_ext_coef = [0.031190000,     0.031062000,     0.030934000,     0.030806000,     0.030678000,     0.030550000,     0.030422000,     0.030294000,     0.030166000,     0.030038000,     0.029910000,     0.029706000,     0.029502000,     0.029298000,     0.029094000,     0.028890000,     0.028702000,     0.028514000,     0.028326000,     0.028138000,     0.027950000,     0.027806000,     0.027662000,     0.027518000,     0.027374000,     0.027230000,     0.027104000,     0.026978000,     0.026852000,     0.026726000,     0.026600000,     0.026320000,     0.025998000,     0.025794000,     0.025582000,     0.025299200,     0.025162320,     0.024898000,     0.024664000,     0.024571200,     0.024496960,     0.024316000,     0.024165000,     0.024095000,     0.024025000,     0.023955000,     0.023780000,     0.023500000,     0.023332000,     0.023251150,     0.023169250,     0.023080000,     0.022870000,     0.022660000,     0.022388500,     0.022265500,     0.022142500,     0.022081000,     0.021994900,     0.021859600,     0.021650500,     0.021466000,     0.021299950,     0.020796000,     0.020477999,     0.020160000,     0.019948000,     0.019842000,     0.019683000,     0.019513400,     0.019418000,     0.019099999,     0.018676000,     0.018360400,     0.018150800,     0.017836399,     0.017522000,     0.017050400,     0.016552600,     0.016343000,     0.016191040,     0.015981440,     0.015750800,     0.015561560,     0.015372320,     0.015173121,     0.015033680,     0.014854400,     0.014655200,     0.014495840,     0.014177120,     0.013559600,     0.013078000,     0.012619600,     0.012161200,     0.011855600,     0.011664600,     0.011517879,     0.011325159,     0.011132440,     0.010907601,     0.010599248,     0.010278048,    0.0098155201,    0.0092373607,    0.0086591997,    0.0083380000,    0.0086319997,    0.0089260001,    0.0092199999,    0.0095140003,    0.0098080000,    0.0083195014,    0.0068309998,    0.0064320528,    0.0060437270,    0.0057510000,    0.0054398003,    0.0051285999,    0.0048954001,    0.0047401999,    0.0045850000]
+  
+  ; Scale the above so we can use an aerosol index of 1-10 to go from few aerosols (little scattering) to loads of aerosols
+  aero_maritime_ext_coef = (aero_maritime_ext_coef * 30)/10
+  
   ; Calculate likelihood of Rayleigh scattering occurring
   rayleigh_scat_prob = (1/wavelengths^4)/150
  
@@ -91,10 +100,16 @@ PRO RUN_RTM
   rayleigh_scat_prob = rayleigh_scat_prob[wavelengths_to_use]
 
   ; Create params structure
-  params_struct = {params, precip_water_depth: 0.3}
+  params_struct = {params, precip_water_depth: 0.3, aerosol_amount: 3}
 
   ; Create grid
   grid = intarr(x_len, y_len)
+  
+  grid[5, 1] = 1
+  grid[5, 2] = 1
+  grid[6, 1] = 1
+  grid[6, 2] = 1
+  
   
   n_wavelengths = N_ELEMENTS(wavelengths_to_use)
   
@@ -108,11 +123,15 @@ PRO RUN_RTM
   ; Create database of params which is referenced by grid cell contents
   db = replicate(params_struct, 100)
   
+  db[1].precip_water_depth = 0.5
+  
   
   ; ----------------------
   ; START MONTE CARLO LOOP
   ; ----------------------
   FOR it = 0L, 1000 DO BEGIN
+    IF it MOD 100 EQ 0 THEN print, "At iteration ", it
+  
     ; Start ray at the sun
     start_ray_x = sun_x
     start_ray_y = sun_y
@@ -132,9 +151,10 @@ PRO RUN_RTM
       prev_ray_y = start_prev_ray_y
     
       wavelength = wavelengths[wv]
-      print, "Doing wavelength ", wavelength
+      ;print, "Doing wavelength ", wavelength
       
       precip_water_depth = 0
+      aerosol_amount = 0
       n_cells = 0
       
       ; Loop until ray location is at edge of grid
@@ -152,27 +172,37 @@ PRO RUN_RTM
         
         ; Get the parameters for this cell from the database
         params = db[grid[ray_x, ray_y]]
-      
-        
-      
+
         ; Sum the precipitable water depth - so at the end we have the total for the whole path
         precip_water_depth += params.precip_water_depth
         
-        
         rand = RANDOMU(seed, 1)
+
+        aerosol_amount += params.aerosol_amount
         
-        ;print, "Rand = ", rand
-        ;print, "R Scat Prob = ", rayleigh_scat_prob[wv]
-        
-        ; Decide whether to scatter or not
-        IF rand LT rayleigh_scat_prob[wv] THEN BEGIN          
-          ; Calculate Rayleigh scatter
-          ;print, "Rand = ", rand
-          ;print, "Doing Rayleigh Scatter"
-          new_coords = CALCULATE_RAYLEIGH_SCATTER(prev_ray_x, prev_ray_y, ray_x, ray_y)   
+        ; TODO: Better way of deciding what kind (Rayleigh vs. Aerosol) of scattering to do
+        IF aero_maritime_ext_coef[wv] * params.aerosol_amount GT rayleigh_scat_prob[wv] THEN BEGIN
+          test_probability = aero_maritime_ext_coef[wv] * params.aerosol_amount
+          scatter_type = 1
         ENDIF ELSE BEGIN
-         ;print, "Going straight"
-          ; No - send ray straight on (depending on previous grid location)
+          test_probability = rayleigh_scat_prob[wv]
+          scatter_type = 2
+        ENDELSE
+         
+        ; Decide whether to scatter
+        IF rand LT test_probability THEN BEGIN
+          ; Scattering will take place
+          IF scatter_type EQ 1 THEN BEGIN
+            ; Calculate aerosol scatter
+            ;print, "Aero Scattering taking place"
+            new_coords = CALCULATE_AEROSOL_SCATTER(prev_ray_x, prev_ray_y, ray_x, ray_y) 
+          ENDIF ELSE BEGIN
+            ; Calculate Rayleigh scatter
+            ;print, "Rayleigh Scattering taking place"
+            new_coords = CALCULATE_RAYLEIGH_SCATTER(prev_ray_x, prev_ray_y, ray_x, ray_y)   
+          ENDELSE          
+        ENDIF ELSE BEGIN
+          ; No scattering will occur - send the ray straight on
           new_coords = CALCULATE_STRAIGHT_PATH(prev_ray_x, prev_ray_y, ray_x, ray_y)
         ENDELSE 
           
@@ -212,9 +242,7 @@ PRO RUN_RTM
       
       ; Transmittance due to water vapour (H2O) from SPCTRAL2 manual, eqn 2-8
       trans_water_vapour = EXP(  (DOUBLE(-0.2385) * wv_abs_coef[wv] * precip_water_depth) / (1+20.07*wv_abs_coef[wv] * precip_water_depth)^0.45)
-      
-      print, TRANS_WATER_VAPOUR
-      
+            
       ; Transmittance due to uniformly mixed gas absorption from SPCTRAL2 manual eqn 2-11
       trans_mixed_gases = EXP(  (DOUBLE(-1.41) * gas_abs_coef[wv] * path_length) / (1 + 118.93 * gas_abs_coef[wv] * path_length)^0.45)
       
@@ -223,7 +251,12 @@ PRO RUN_RTM
       
       ; Transmittance due to ozone from SPCTRAL2 manual eqn 2-9 with our path length instead of Mo (as Mo is approx anyway)
       trans_ozone = EXP( -1 * DOUBLE(ozone_abs_coef[wv]) * ozone_amount * 0.001 * path_length)
-        
+      
+      
+      scaled_aerosol_amount = aerosol_amount / n_cells
+      trans_aero_abs = EXP( DOUBLE(-1) * aero_abs_coef[wv] * scaled_aerosol_amount * path_length)
+      ;print, trans_aero_abs
+      
       ;print, "Final location ", ray_x, ray_y
       ;print, "Total water ", precip_water_depth
       ;print, "Trans WV ", trans_water_vapour
@@ -236,7 +269,7 @@ PRO RUN_RTM
       ; From SPCTRAL2 manual, eqn 2-1
       ; The first calculation is for a surface normal to the direction of the sun
       ; Second calculation converts this to a horizontal surface
-      irradiance = extra_terrestrial[wv] * earth_sun_distance_factor * trans_water_vapour * trans_ozone * trans_mixed_gases
+      irradiance = extra_terrestrial[wv] * earth_sun_distance_factor * trans_water_vapour * trans_ozone * trans_mixed_gases * trans_aero_abs
       ;print, "All trans = ", TRANS_WATER_VAPOUR * TRANS_MIXED_GASES * TRANS_OZONE
       ;irradiance = irradiance * COS(solar_zenith_angle * !DTOR)
       ;print, "Wavelength", wavelengths
@@ -258,7 +291,8 @@ PRO RUN_RTM
   print, "FINAL RESULTS"
   print, "-------------"
   print, "N hits ", NUMBER_OF_SENSOR_HITS
-  print, "Received Irr Vert", RECEIVED_IRRADIANCE_VERTICAL
+  
+  ;print, "Received Irr Vert", RECEIVED_IRRADIANCE_VERTICAL
   print, "LEFT:"
   print, received_irradiance_left / number_of_sensor_hits
   print, "VERTICAL:"
@@ -270,11 +304,10 @@ PRO RUN_RTM
   
   print, "Time taken = ", end_time - start_time
   
-  plot, wavelengths, RECEIVED_IRRADIANCE_LEFT
+  cgWindow, 'plot', wavelengths, RECEIVED_IRRADIANCE_VERTICAL / NUMBER_OF_SENSOR_HITS
   ;window
   ;plot, wavelengths, EXTRA_TERRESTRIAL, linestyle=5
   
   print, "Done"
-  print, "Waiting..."
   
 END

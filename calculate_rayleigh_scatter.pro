@@ -18,6 +18,7 @@ FUNCTION CALCULATE_RAYLEIGH_SCATTER, prev_ray_x, prev_ray_y, ray_x, ray_y
     rand GT 0.62498 AND rand LT 0.78748: locations_index_add = 4
     rand GT 0.78748 AND rand LT 0.91248: locations_index_add = 5
     rand GT 0.91248 AND rand LE 1.0: locations_index_add = 6
+    ELSE: locations_index_add = 6
   ENDCASE
     
   diff_x = prev_ray_x - ray_x

@@ -1,4 +1,4 @@
-PRO RUN_RTM
+FUNCTION RUN_RTM, cloud_center_x, cloud_center_y, cloud
   start_time = SYSTIME(1)
 
   ; Set number of iterations
@@ -15,15 +15,15 @@ PRO RUN_RTM
   long = 0
 
   ; Set size of grid
-  x_len = 10
-  y_len = 5
+  x_len = 100
+  y_len = 20
   
   ; Set location of sun
-  sun_x = 5
+  sun_x = x_len / 2
   sun_y = 0
   
   ; Set location of sensor
-  sensor_x = 5
+  sensor_x = x_len / 2
   sensor_y = y_len ; Sensor is off the bottom of the grid!
   
   ; Create arrays of constants
@@ -109,8 +109,8 @@ PRO RUN_RTM
   ozone_abs_coef = ozone_abs_coef[wavelengths_to_use]
   rayleigh_scat_prob = rayleigh_scat_prob[wavelengths_to_use]
 
-  ; Create grid
-  grid = intarr(x_len, y_len)  
+  ; Create grids
+  ;grid = intarr(x_len, y_len)
   
   n_wavelengths = N_ELEMENTS(wavelengths_to_use)
   
@@ -283,20 +283,19 @@ PRO RUN_RTM
   print, "-------------"
   print, "N hits ", NUMBER_OF_SENSOR_HITS
   
-  print, "LEFT:"
-  print, received_irradiance_left / number_of_sensor_hits
-  print, "VERTICAL:"
-  print, received_irradiance_vertical / number_of_sensor_hits
-  print, "RIGHT:"
-  print, received_irradiance_right / number_of_sensor_hits
+  ;print, "LEFT:"
+  ;print, received_irradiance_left / number_of_sensor_hits
+  ;print, "VERTICAL:"
+  ;print, received_irradiance_vertical / number_of_sensor_hits
+  ;print, "RIGHT:"
+  ;print, received_irradiance_right / number_of_sensor_hits
   
   end_time = SYSTIME(1)
   
   print, "Time taken = ", end_time - start_time
   
-  cgWindow, 'plot', wavelengths, RECEIVED_IRRADIANCE_VERTICAL / NUMBER_OF_SENSOR_HITS
-  cgWindow, 'plot', wavelengths, EXTRA_TERRESTRIAL, linestyle=5
-  
-  print, "Done"
+  result = {wavelengths: wavelengths, vertical: received_irradiance_vertical / NUMBER_OF_SENSOR_HITS, left: received_irradiance_left / NUMBER_OF_SENSOR_HITS, right: received_irradiance_right / NUMBER_OF_SENSOR_HITS}
+
+  return, result
   
 END

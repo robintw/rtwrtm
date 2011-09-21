@@ -120,19 +120,20 @@ PRO RUN_RTM
   received_irradiance_right = REPLICATE(0.0, n_wavelengths)
   number_of_sensor_hits = 0L
   
-  ; Create params structure with default values
-  params_struct = {params, precip_water_depth: 0.3, aerosol_amount: 3}
+  ; Set aerosols across the whole sky to be low
   
-  ; Create database of params which is referenced by grid cell contents
-  db = replicate(params_struct, 100)
   
-  db[1].precip_water_depth = 0.5
+  ; Parameterise LWC according to rough LWC profile through atmosphere (from literature)
+  grid_precip_water_content = PARAM_LWC(x_len, y_len, 2.6)
+  grid_aerosol_type = PARAM_AEROSOL_TYPE(x_len, y_len)
+  grid_aerosol_amount = PARAM_AEROSOL_AMOUNT(x_len, y_len)
   
-  grid[5, 1] = 1
-  grid[5, 2] = 1
-  grid[6, 1] = 1
-  grid[6, 2] = 1
+
+  IF cloud EQ 1 THEN PLACE_CLOUDS, cloud_center_x, cloud_center_y, grid_aerosol_amount, grid_precip_water_content
+
   
+  
+
   ; ----------------------
   ; START MONTE CARLO LOOP
   ; ----------------------
@@ -176,16 +177,16 @@ PRO RUN_RTM
         n_cells += 1
         
         ; Get the parameters for this cell from the database
-        params = db[grid[ray_x, ray_y]]
+        ;params = db[grid[ray_x, ray_y]]
 
         ; Sum the precipitable water depth - so at the end we have the total for the whole path
-        precip_water_depth += params.precip_water_depth
-        aerosol_amount += params.aerosol_amount
+        precip_water_depth += grid_precip_water_content[ray_x, ray_y]
+        aerosol_amount += grid_aerosol_amount[ray_x, ray_y]
         
         
         rand = RANDOMU(seed, 1)
         
-        aero_prob = aero_maritime_ext_coef[wv] * params.aerosol_amount
+        aero_prob = aero_maritime_ext_coef[wv] * GRID_AEROSOL_AMOUNT[ray_x, ray_y]
 
         ; TODO: Better way of deciding what kind (Rayleigh vs. Aerosol) of scattering to do
         IF aero_prob GT rayleigh_scat_prob[wv] THEN BEGIN

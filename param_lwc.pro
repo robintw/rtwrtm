@@ -1,28 +1,14 @@
-PRO PARAM_LWC
-  total_lwc = 1.6
+FUNCTION PARAM_LWC, x_len, y_len, total_lwc  
+  beta = -0.6
+  alpha = total_lwc / ( (1 - EXP(beta * y_len)) / (1 - EXP(beta)))
   
-  y_len = 20
+  array = indgen(y_len)
   
-  atmos_height = 20
+  array = alpha * EXP(beta * array)
   
-  cells_per_km = DOUBLE(y_len) / 20
+  print, total(array)
+  ;print, array
   
-  lwc_top = 0.0625 * total_lwc
-  lwc_middle = 0.1875 * total_lwc
-  lwc_bottom = 0.75 * total_lwc
-  
-  lwc_top_per_cell = lwc_top / (cells_per_km * 3)
-  lwc_middle_per_cell = lwc_middle / (cells_per_km * 3)
-  lwc_bottom_per_cell = lwc_bottom / (cells_per_km * 3)
-  
-  array_lwc_bottom = replicate(lwc_bottom_per_cell, 3)
-  array_lwc_middle = replicate(lwc_middle_per_cell, 3)
-  array_lwc_top = replicate(lwc_top_per_cell, 3)
-  array_above_lwc = replicate(0, 11)
-  
-  array = [array_lwc_bottom, array_lwc_middle, array_lwc_top, array_above_lwc]
-  
-  print, array
-  print, TOTAL(array)
+  return, repmat(transpose(reverse(array)), x_len, 1)
   
 END

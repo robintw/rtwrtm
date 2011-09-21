@@ -201,7 +201,7 @@ PRO RUN_RTM
           IF scatter_type EQ 1 THEN BEGIN
             ; Calculate aerosol scatter
             ;print, "Aero Scattering taking place"
-            new_coords = CALCULATE_AEROSOL_SCATTER(prev_ray_x, prev_ray_y, ray_x, ray_y) 
+            new_coords = CALCULATE_AEROSOL_SCATTER(prev_ray_x, prev_ray_y, ray_x, ray_y, grid_aerosol_type[ray_x, ray_y]) 
           ENDIF ELSE BEGIN
             ; Calculate Rayleigh scatter
             ;print, "Rayleigh Scattering taking place"

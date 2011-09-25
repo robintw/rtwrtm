@@ -1,4 +1,7 @@
 FUNCTION RUN_RTM, cloud_center_x, cloud_center_y, cloud
+  DEFSYSV, "!AERO", {maritime: 0, urban: 1, cumulus_cont_poll: 2}
+
+  
   start_time = SYSTIME(1)
 
   ; Set number of iterations

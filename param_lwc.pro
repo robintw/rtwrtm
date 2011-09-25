@@ -9,6 +9,6 @@ FUNCTION PARAM_LWC, x_len, y_len, total_lwc
   print, total(array)
   ;print, array
   
-  return, repmat(transpose(reverse(array)), x_len, 1)
+  return, repmat(transpose(array), x_len, 1)
   
 END

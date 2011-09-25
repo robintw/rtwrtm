@@ -5,7 +5,7 @@ FUNCTION RUN_RTM, cloud_center_x, cloud_center_y, cloud
   start_time = SYSTIME(1)
 
   ; Set number of iterations
-  n_iterations = 1000
+  n_iterations = 10000
 
   ; Set day of year
   day_of_year = 78
@@ -18,11 +18,11 @@ FUNCTION RUN_RTM, cloud_center_x, cloud_center_y, cloud
   long = 0
 
   ; Set size of grid
-  x_len = 100
+  x_len = 20
   y_len = 20
   
   ; Set location of sun
-  sun_x = x_len / 2
+  sun_x = 8
   sun_y = 0
   
   ; Set location of sensor
@@ -127,14 +127,11 @@ FUNCTION RUN_RTM, cloud_center_x, cloud_center_y, cloud
   
   
   ; Parameterise LWC according to rough LWC profile through atmosphere (from literature)
-  grid_precip_water_content = PARAM_LWC(x_len, y_len, 2.6)
+  grid_precip_water_content = PARAM_LWC(x_len, y_len, 0.5)
   grid_aerosol_type = PARAM_AEROSOL_TYPE(x_len, y_len)
   grid_aerosol_amount = PARAM_AEROSOL_AMOUNT(x_len, y_len)
   
-
-  IF cloud EQ 1 THEN PLACE_CLOUDS, cloud_center_x, cloud_center_y, grid_aerosol_amount, grid_precip_water_content
-
-  
+  IF cloud EQ 1 THEN PLACE_CLOUDS, cloud_center_x, cloud_center_y, grid_aerosol_type, grid_aerosol_amount, grid_precip_water_content
   
 
   ; ----------------------
@@ -142,10 +139,14 @@ FUNCTION RUN_RTM, cloud_center_x, cloud_center_y, cloud
   ; ----------------------
   FOR it = 0L, n_iterations DO BEGIN
     IF it MOD 100 EQ 0 THEN print, "At iteration ", it
-  
+    
+    
+    
     ; Start ray at the sun
     start_ray_x = sun_x
     start_ray_y = sun_y
+    
+    
     
     ; Choose randomly which angle it is coming out of the sun (ie.
     ; what it's 'imaginary' previous point was)
@@ -155,6 +156,9 @@ FUNCTION RUN_RTM, cloud_center_x, cloud_center_y, cloud
     
     ; Start loop over selected wavelengths
     FOR wv = 0, N_ELEMENTS(wavelengths_to_use) - 1 DO BEGIN
+      x_points = list()
+      y_points = list()
+      
       ray_x = start_ray_x
       ray_y = start_ray_y
       
@@ -174,6 +178,9 @@ FUNCTION RUN_RTM, cloud_center_x, cloud_center_y, cloud
         ; If ray location is at edge of grid, destroy the ray and skip to the bottom of the loop
         if ray_x GE x_len OR ray_x LT 0 THEN BREAK
         IF ray_y GE y_len OR ray_y LT 0 THEN BREAK
+        
+        ;x_points->add, ray_x
+        ;y_points->add, ray_y
         
         ;print, "After break"
         
@@ -230,6 +237,7 @@ FUNCTION RUN_RTM, cloud_center_x, cloud_center_y, cloud
       ENDWHILE
 
       
+      
       ; Check whether final location is somewhere we're interested in
       ; (basically: is it near the sensor?)
       IF ray_y NE sensor_y THEN CONTINUE
@@ -238,7 +246,13 @@ FUNCTION RUN_RTM, cloud_center_x, cloud_center_y, cloud
       ; ------------------------------------------
       ; RAY HAS GOT TO SENSOR - so do calculations
       ; ------------------------------------------
+      ;print, x_points
+      ;print, y_points
       
+      ;x_points->add, sensor_x
+      ;y_points->add, sensor_y
+      
+      ;cgWindow, 'plot', x_points->toArray(), y_points->toArray(), xrange=[0, x_len], yrange=[y_len,0], xtitle="X", ytitle="Y", position=[0.1, 0.15, 0.9, 0.85]      
       ; TODO: Split this by angle?
       number_of_sensor_hits += 1
       

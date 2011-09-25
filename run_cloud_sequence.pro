@@ -13,13 +13,11 @@ PRO RUN_CLOUD_SEQUENCE
 
   ;cgWindow, 'plot', result.wavelengths, result.vertical
   
-  result = RUN_RTM(0, 0, 0)
+  result = RUN_RTM(5, 0, 0)
   ;nocloud = replicate(result.vertical[58], 30)
   
   cgWindow, 'plot', result.wavelengths, result.vertical
   
-  ;!P.BACKGROUND = FSC_Color('white')
-  ;!P.COLOR = FSC_Color('black')
   ;cgWindow, 'plot', data
   ;cgWindow, 'oplot', nocloud, linestyle=1, /AddCmd
 END

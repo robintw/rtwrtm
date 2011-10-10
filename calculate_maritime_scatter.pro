@@ -29,7 +29,7 @@ ENDCASE
   current_index = WHERE(locations_x EQ diff_x AND locations_y EQ diff_y, count)
   
   IF count EQ 0 THEN BEGIN
-    print, "Count EQ 0!"
+    print, "Maritime Count EQ 0!"
   ENDIF
   
   new_index = (current_index + locations_index_add) MOD 8

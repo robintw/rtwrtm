@@ -22,13 +22,12 @@ FUNCTION CALCULATE_RAYLEIGH_SCATTER, prev_ray_x, prev_ray_y, ray_x, ray_y
   ENDCASE
     
   diff_x = prev_ray_x - ray_x
-  diff_y = prev_ray_y - ray_y
-  
+  diff_y = prev_ray_y - ray_y  
   
   current_index = WHERE(locations_x EQ diff_x AND locations_y EQ diff_y, count)
   
   IF count EQ 0 THEN BEGIN
-    print, "Count EQ 0!"
+    print, "Rayleigh Count EQ 0!"
   ENDIF
   
   new_index = (current_index + locations_index_add) MOD 8

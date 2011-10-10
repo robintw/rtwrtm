@@ -36,7 +36,7 @@ PRO CLOUD_CA
   ;act[230, 190, 0] = 1
   ;act[160, 30, 0] = 1
   
-  FOR loop = 0L, 8 DO BEGIN
+  FOR loop = 0L, 100 DO BEGIN
     ; A  B  C
     ; D  E  F
     ; G  H  I
@@ -73,8 +73,11 @@ PRO CLOUD_CA
     print, loop
     cgImScale, TOTAL(cld, 2)
   ENDFOR
-  res = TOTAL(cld, 2)
-  r = res
+  ;res = TOTAL(cld, 2)
+  ;r = res
+  r = cld
+  help, r
+  
   ;ENVI_ENTER_DATA, r
   ;MOVE_AND_MEASURE, res
 END

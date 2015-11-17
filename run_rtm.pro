@@ -8,7 +8,7 @@ NO_SCATTER = 0
   start_time = SYSTIME(1)
 
   ; Set number of iterations
-  n_iterations = 50000
+  n_iterations = 5000
   ;n_iterations = 100
 
   ; Set day of year
@@ -229,7 +229,7 @@ NO_SCATTER = 0
       plot, x_points->toArray(), y_points->toArray(), xrange=[0, x_len], yrange=[y_len,0], xtitle="X", ytitle="Y", position=[0.1, 0.15, 0.9, 0.85]      
       x = x_points->toArray()
       y = y_points->toArray()
-      save, x, y, filename="/Users/robin/Dropbox/IDL_Savs/ArrowsPlot8.sav"
+      save, x, y, filename="ArrowsPlot8.sav"
       
       ; TODO: Split this by angle?
       number_of_sensor_hits += 1

@@ -1,6 +1,6 @@
 PRO PLACE_CLOUDS, global_centre_x, global_centre_y, grid_aerosol_type, grid_aerosol_amount, grid_precip_water_content
   ; Get cloud array from SAV file
-  restore, "/Users/robin/Dropbox/IDL_Savs/CACloud.sav"
+  restore, "CACloud.sav"
   cloud = c
     
   dims = SIZE(cloud, /dimensions)

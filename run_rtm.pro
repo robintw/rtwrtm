@@ -1,5 +1,10 @@
 FUNCTION RUN_RTM, cloud_center_x, cloud_center_y, cloud  
-  @CONSTANTS
+aerosol_types = {maritime: 0, urban: 1, cumulus_cont_poll: 2}
+
+AEROSOL_SCATTER = 1
+RAYLEIGH_SCATTER = 2
+NO_SCATTER = 0
+
   start_time = SYSTIME(1)
 
   ; Set number of iterations
@@ -17,15 +22,16 @@ FUNCTION RUN_RTM, cloud_center_x, cloud_center_y, cloud
   long = 0
 
   ; Set size of grid
-  x_len = 50
+  x_len = 20
   y_len = 20
   
   ; Set location of sun
-  sun_x = 10
+  sun_x = 8
   sun_y = 0
   
   ; Set location of sensor
   sensor_x = x_len / 2
+  ;sensor_x = 20
   sensor_y = y_len ; Sensor is off the bottom of the grid!
   
   ; Create arrays of constants
@@ -137,8 +143,8 @@ FUNCTION RUN_RTM, cloud_center_x, cloud_center_y, cloud
         if ray_x GE x_len OR ray_x LT 0 THEN BREAK
         IF ray_y GE y_len OR ray_y LT 0 THEN BREAK
         
-        ;x_points->add, ray_x
-        ;y_points->add, ray_y
+        x_points->add, ray_x
+        y_points->add, ray_y
         
         ; Increment the count of how many cells we've been through
         n_cells += 1
@@ -217,10 +223,14 @@ FUNCTION RUN_RTM, cloud_center_x, cloud_center_y, cloud
       ;print, x_points
       ;print, y_points
       
-      ;x_points->add, sensor_x
-      ;y_points->add, sensor_y
+      x_points->add, sensor_x
+      y_points->add, sensor_y
       
-      ;cgWindow, 'plot', x_points->toArray(), y_points->toArray(), xrange=[0, x_len], yrange=[y_len,0], xtitle="X", ytitle="Y", position=[0.1, 0.15, 0.9, 0.85]      
+      plot, x_points->toArray(), y_points->toArray(), xrange=[0, x_len], yrange=[y_len,0], xtitle="X", ytitle="Y", position=[0.1, 0.15, 0.9, 0.85]      
+      x = x_points->toArray()
+      y = y_points->toArray()
+      save, x, y, filename="/Users/robin/Dropbox/IDL_Savs/ArrowsPlot8.sav"
+      
       ; TODO: Split this by angle?
       number_of_sensor_hits += 1
       
